@@ -5,6 +5,7 @@ import {FormErrors} from "../FormErrors";
 import Alert from "react-bootstrap/Alert";
 import SubmitButton from "../Buttons/SubmitButton";
 import {Link} from "react-router-dom";
+import {API_URL} from "../../services/Config"
 
 export default class SignUpForm extends Component {
 
@@ -120,7 +121,7 @@ export default class SignUpForm extends Component {
             confirm_password: this.state.password
         };
 
-        axios.post('http://127.0.0.1:8000/api/register', userObject)
+        axios.post(API_URL + '/api/register', userObject)
             .then((res) => {
                 if (res.status === 200) {
                     this.props.setAuth(res.data.user)

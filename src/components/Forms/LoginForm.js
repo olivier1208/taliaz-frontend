@@ -4,6 +4,7 @@ import axios from "axios";
 import {Redirect} from "react-router-dom";
 import SubmitButton from "../Buttons/SubmitButton";
 import {Link} from "react-router-dom";
+import {API_URL} from '../../services/Config'
 
 export default class SignInForm extends Component {
     constructor(props) {
@@ -38,7 +39,7 @@ export default class SignInForm extends Component {
             password: this.state.password
         };
 
-        axios.post('http://127.0.0.1:8000/api/login', userObject)
+        axios.post(API_URL + '/api/login', userObject)
             .then((res) => {
                 if (res.status === 200) {
                     this.props.setAuth(res.data.user)
