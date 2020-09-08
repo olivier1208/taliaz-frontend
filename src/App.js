@@ -15,9 +15,11 @@ class App extends Component {
         super(props);
         this.logOut = this.logOut.bind(this);
         this.setAuth = this.setAuth.bind(this);
+        this.setUserList = this.setUserList.bind(this);
 
         this.state = {
             currentUser: undefined,
+            users: []
         };
     }
 
@@ -39,12 +41,20 @@ class App extends Component {
         });
     }
 
+    setUserList(value){
+        localStorage.setItem("users", JSON.stringify(value));
+
+        this.setState({
+            users: value,
+        });
+    }
+
     logOut() {
         AuthService.logout();
     }
 
     render() {
-        const {currentUser} = this.state;
+        const {currentUser, users} = this.state;
 
         return (
             <Router>
@@ -57,10 +67,11 @@ class App extends Component {
                         <div className="row">
                             <div className="col-md-12 my-3">
                                 <Switch>
-                                    <Route exact path='/' render={(props) => <Home {...props} user={currentUser}/>}/>
-                                    <Route path="/register" component={RegisterForm}/>
+                                    <Route exact path='/' render={(props) => <Home {...props} user={currentUser} users={users}/>}/>
+                                    <Route path="/register"
+                                           render={(props) => <RegisterForm {...props} setAuth={this.setAuth}/>}/>
                                     <Route path="/login"
-                                           render={(props) => <LoginForm {...props} setAuth={this.setAuth}/>}/>
+                                           render={(props) => <LoginForm {...props} setAuth={this.setAuth} setUserList={this.setUserList}/>}/>
                                 </Switch>
                             </div>
                         </div>

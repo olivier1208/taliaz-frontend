@@ -41,7 +41,10 @@ export default class SignInForm extends Component {
         axios.post('http://127.0.0.1:8000/api/login', userObject)
             .then((res) => {
                 if (res.status === 200) {
-                    this.props.setAuth(res.data)
+                    this.props.setAuth(res.data.user)
+                    if (res.data.user.role === "admin"){
+                        this.props.setUserList(res.data.users)
+                    }
                     this.setState({redirect: true})
                 }
             }).catch((error) => {
@@ -72,7 +75,7 @@ export default class SignInForm extends Component {
                 {unauthorizedAlert}
                 {errorAlert}
                 <form onSubmit={this.onSubmit}>
-                    <h3>Sign In</h3>
+                    <h3 className="text-center">Sign In</h3>
 
                     <div className="form-group">
                         <label>Email</label>

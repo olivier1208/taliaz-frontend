@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import axios from 'axios';
-import SweetAlert from "sweetalert2";
+import SweetAlert from "react-bootstrap-sweetalert";
 import {FormErrors} from "../FormErrors";
 import Alert from "react-bootstrap/Alert";
 import SubmitButton from "../Buttons/SubmitButton";
@@ -11,18 +11,25 @@ export default class SignUpForm extends Component {
     constructor(props) {
         super(props)
 
-        this.onChangeUserName = this.onChangeUserName.bind(this);
         this.onChangeUserEmail = this.onChangeUserEmail.bind(this);
+        this.onChangeUserFirstName = this.onChangeUserFirstName.bind(this);
+        this.onChangeUserLastName = this.onChangeUserLastName.bind(this);
+        this.onChangeUserAddress = this.onChangeUserAddress.bind(this);
         this.checkPassword = this.checkPassword.bind(this);
+        this.checkConfirmPassword = this.checkConfirmPassword.bind(this);
         this.onSubmit = this.onSubmit.bind(this);
 
         this.state = {
-            username: '',
+            firstName: '',
+            lastName: '',
+            address: '',
             email: '',
             password: '',
-            formErrors: {username: '', email: '', password: ''},
+            passwordConfirmation: '',
+            formErrors: {email: '', password: ''},
             emailValid: false,
             passwordValid: false,
+            passwordMatch: false,
             formValid: false,
             redirect: false,
             success: false,
@@ -55,8 +62,20 @@ export default class SignUpForm extends Component {
         }, this.validateForm);
     }
 
+    checkPasswordEquality(password, passwordConfirmation) {
+        let fieldValidationErrors = this.state.formErrors;
+        let passwordMatch = (password === passwordConfirmation)
+
+        fieldValidationErrors.passwordConfirmation = passwordMatch ? '' : 'Passwords does not match'
+
+        this.setState({
+            formErrors: fieldValidationErrors,
+            passwordMatch: passwordMatch
+        }, this.validateForm);
+    }
+
     validateForm() {
-        this.setState({formValid: this.state.emailValid && this.state.passwordValid});
+        this.setState({formValid: this.state.emailValid && this.state.passwordValid && this.state.passwordConfirmation});
     }
 
     onChangeUserEmail(e) {
@@ -65,9 +84,27 @@ export default class SignUpForm extends Component {
         })
     }
 
+    onChangeUserFirstName(e) {
+        this.setState({firstName: e.target.value})
+    }
+
+    onChangeUserLastName(e) {
+        this.setState({lastName: e.target.value})
+    }
+
+    onChangeUserAddress(e) {
+        this.setState({address: e.target.value})
+    }
+
     checkPassword(e) {
         this.setState({password: e.target.value}, () => {
             this.validateField("password", this.state.password)
+        })
+    }
+
+    checkConfirmPassword(e) {
+        this.setState({passwordConfirmation: e.target.value}, () => {
+            this.checkPasswordEquality(this.state.password, this.state.passwordConfirmation)
         })
     }
 
@@ -75,25 +112,30 @@ export default class SignUpForm extends Component {
         e.preventDefault()
 
         const userObject = {
-            username: this.state.username,
+            first_name: this.state.firstName,
+            last_name: this.state.lastName,
+            address: this.state.address,
             email: this.state.email,
-            password: this.state.password
+            password: this.state.password,
+            confirm_password: this.state.password
         };
 
-        axios.post('http://127.0.0.1:8000/register', userObject)
+        axios.post('http://127.0.0.1:8000/api/register', userObject)
             .then((res) => {
-                if (res.status === 201) {
+                if (res.status === 200) {
+                    this.props.setAuth(res.data.user)
                     this.setState({success: true})
                 }
 
-            }).catch((error, mes) => {
-            if (error.response.data.error.code === 400) {
+            }).catch((error) => {
+
+            if (error.response.data.errors.email) {
                 this.setState({emailUnique: true})
             }
             console.log(error)
         });
 
-        this.setState({username: '', email: '', password: ''})
+        this.setState({firstName: '', lastName: '', address: '', email: '', password: '', passwordConfirmation: ''})
     }
 
     errorClass(error) {
@@ -109,11 +151,11 @@ export default class SignUpForm extends Component {
                     success
                     title="User Created Successfully !"
                     onConfirm={() => {
-                        this.props.history.push('/api/auth/signin')
+                        this.props.history.push('/')
                     }}
                     timeout={5000}
                 >
-                    Click OK to Sign in now
+                    Click OK to redirect to homepage
                 </SweetAlert>
 
             </div>;
@@ -126,10 +168,20 @@ export default class SignUpForm extends Component {
                     <FormErrors formErrors={this.state.formErrors}/>
                 </div>
                 <form onSubmit={this.onSubmit}>
-                    <div className={`form-group ${this.errorClass(this.state.formErrors.username)}`}>
-                        <label>Username</label>
-                        <input type="text" value={this.state.username} onChange={this.onChangeUserName}
-                               className="form-control"/>
+
+                    <h3 className="text-center">Register</h3>
+                    <hr/>
+                    <div className="form-group">
+                        <label>First Name</label>
+                        <input type="text" className="form-control" value={this.state.firstName} onChange={this.onChangeUserFirstName}/>
+                    </div>
+                    <div className="form-group">
+                        <label>Last Name</label>
+                        <input type="text" className="form-control" value={this.state.lastName} onChange={this.onChangeUserLastName}/>
+                    </div>
+                    <div className="form-group">
+                        <label>Address</label>
+                        <input type="text" className="form-control" value={this.state.address} onChange={this.onChangeUserAddress}/>
                     </div>
                     <div className="form-group">
                         <label>Email</label>
@@ -141,14 +193,20 @@ export default class SignUpForm extends Component {
                         <input type="password" value={this.state.password} onChange={this.checkPassword}
                                className="form-control"/>
                     </div>
+
+                    <div className={`form-group ${this.errorClass(this.state.formErrors.email)}`}>
+                        <label>Confirm your password</label>
+                        <input type="password" value={this.state.passwordConfirmation} onChange={this.checkConfirmPassword}
+                               className="form-control"/>
+                    </div>
                     <SubmitButton
                         value="Create User"
-                        className={`form-group ${this.errorClass(this.state.formErrors.password)} justify-content-center`}
+                        className="form-group justify-content-center"
                         disabled={!this.state.formValid}
                         variant="success"
                     />
                     <p className="forgot-password text-right">
-                        <Link to={"/api/auth/signin"}> Already registered ?</Link>
+                        <Link to={"/login"}> Already registered ?</Link>
                     </p>
                 </form>
             </div>
